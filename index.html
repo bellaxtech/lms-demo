@@ -48,8 +48,58 @@
   .g2{grid-template-columns:1fr 1fr}
   .g3{grid-template-columns:repeat(3,1fr)}
   .g4{grid-template-columns:repeat(4,1fr)}
-  @media(max-width:900px){.shell{grid-template-columns:1fr} aside{border-right:0;border-bottom:1px solid var(--line)}
-    .g2,.g3,.g4{grid-template-columns:1fr} main{padding:16px}}
+  /* ── 모바일 ── */
+  @media(max-width:900px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    main{padding:16px 14px 40px;min-width:0}
+    aside{min-width:0}
+    .g2,.g3{grid-template-columns:1fr}
+    .g4{grid-template-columns:1fr 1fr}
+    aside{border-right:0;border-bottom:1px solid var(--line);padding:10px 10px 8px;
+      position:sticky;top:0;z-index:20;background:#fff}
+    .brand{padding:2px 4px 8px}
+    .brand span{font-size:13.5px}
+    /* 모바일에서는 칩을 줄바꿈해 항목이 숨지 않게 한다(가로 스크롤은 발견이 어렵다) */
+    nav{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:2px}
+    nav a{flex:none;white-space:nowrap;padding:5px 9px;border:1px solid var(--line-2);
+      border-radius:20px;font-size:12px;background:#fff;line-height:1.25}
+    nav a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+    .nav-t{display:none}
+    h1{font-size:18px}
+    header.page{margin-bottom:12px;gap:10px}
+    header.page .btn,header.page select{width:100%}
+    .card{padding:13px 12px;border-radius:9px}
+    .kpi{padding:11px 12px}
+    .kpi b{font-size:18px}
+    .flow{flex-wrap:wrap}
+    .flow div{flex:1 1 44%}
+    .report{padding:16px 14px}
+    .note{font-size:12.5px}
+    .small{font-size:12px}
+    .badge{font-size:11.5px}
+    .demo-bar{font-size:12px;padding:7px 12px;gap:8px;line-height:1.35}
+    .demo-bar .sp{display:none}
+    .demo-bar select{flex:1}
+    label.f{font-size:12px}
+    .row{grid-template-columns:1fr !important}
+    .q{padding:13px 12px}
+    .q .qt{font-size:13px}
+    .opt{padding:9px 10px;font-size:12.8px}
+  }
+  /* 표는 좁은 화면에서 카드 안에서 가로 스크롤. grid 자식의 min-width:auto가
+     표 min-width 때문에 카드를 밀어내므로 0으로 고정한다. */
+  .grid > *, .card, .kpi, .report, .q { min-width:0; }
+  .card, .report { overflow-x:auto; }
+  @media(max-width:900px){
+    table{min-width:560px}
+    table.wide{min-width:680px}
+  }
+  @media(max-width:560px){
+    .g4{grid-template-columns:1fr 1fr}
+    .kpi b{font-size:17px}
+    .report h3{font-size:15px}
+    body{font-size:13.5px}
+  }
 
   .kpi{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px}
   .kpi b{display:block; font-size:22px; letter-spacing:-.02em; color:var(--navy)}

@@ -149,6 +149,10 @@
     .in,select.in{font-size:16px;min-height:44px}   /* iOS 포커스 확대 방지 */
     nav a{min-height:44px;display:flex;align-items:center}
   }
+  /* 시험 문항 이동: 좌우 하단, 같은 크기 */
+  .qnav{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:8px}
+  .qnav-btn{min-width:118px;justify-content:center;padding:9px 14px}
+  .qnav-spacer{min-width:118px}
   /* 시험 진행 표시 */
   .prog{height:5px;border-radius:4px;background:#e6ebf2;overflow:hidden;margin:2px 0 12px}
   .prog>i{display:block;height:100%;background:var(--navy);border-radius:4px;transition:width .18s}
@@ -548,13 +552,20 @@ function vExam(){
     ${it.opts.map((o,j)=>`<div class="opt ${state.answers[i]===j?'sel':''}" onclick="pick(${i},${j})">
       <span class="n">${'ABCD'[j]}</span><span>${o}</span></div>`).join('')}
   </div>
-  <div style="display:flex;gap:8px;margin-top:4px">
-    ${i>0 ? `<button class="btn ghost" onclick="state.qIndex=${i-1}; render()">이전</button>` : ''}
+  <div class="qnav">
+    ${i>0
+      ? `<button class="btn ghost qnav-btn" onclick="prevQ()">← 이전 문항</button>`
+      : `<span class="qnav-spacer"></span>`}
     ${isLast
-      ? `<button class="btn" style="flex:1" onclick="submitExam()">제출하기</button>`
-      : `<button class="btn" style="flex:1" onclick="nextQ()">다음 문항</button>`}
+      ? `<button class="btn qnav-btn" onclick="submitExam()">제출하기</button>`
+      : `<button class="btn qnav-btn" onclick="nextQ()">다음 문항 →</button>`}
   </div>
   <p class="note" style="margin-top:12px">제출 시 응답은 수정 불가 스냅샷으로 저장되고, 재응시는 새 응시 건으로 남습니다.</p>`;
+}
+function prevQ(){
+  const cur = state.qIndex || 0;
+  if(cur > 0) state.qIndex = cur - 1;
+  render();
 }
 function nextQ(){
   const last = DB.exam.total - 1;

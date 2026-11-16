@@ -31,6 +31,8 @@
     display:grid; place-items:center; font-weight:800; font-size:13px}
   .brand span{font-weight:700; font-size:14.5px; letter-spacing:-.02em}
   .nav-t{font-size:11px; color:var(--muted); padding:12px 8px 6px; letter-spacing:.04em}
+  .hamb{display:none; margin-left:auto; border:1px solid var(--line-2); border-radius:7px;
+    width:36px; height:36px; font-size:16px; line-height:1; background:#fff; color:var(--navy)}
   nav a{display:flex; align-items:center; gap:8px; padding:8px 9px; border-radius:7px;
     color:#33414f; text-decoration:none; font-size:13.3px; cursor:pointer}
   nav a:hover{background:#f2f5f9}
@@ -59,12 +61,16 @@
       position:sticky;top:0;z-index:20;background:#fff}
     .brand{padding:2px 4px 8px}
     .brand span{font-size:13.5px}
-    /* 모바일에서는 칩을 줄바꿈해 항목이 숨지 않게 한다(가로 스크롤은 발견이 어렵다) */
-    nav{display:flex;flex-wrap:wrap;gap:5px;padding-bottom:2px}
-    nav a{flex:none;white-space:nowrap;padding:5px 9px;border:1px solid var(--line-2);
-      border-radius:20px;font-size:12px;background:#fff;line-height:1.25}
-    nav a.on{background:var(--navy);color:#fff;border-color:var(--navy)}
-    .nav-t{display:none}
+    /* 모바일: 햄버거 드로어. 닫혀 있을 때 세로 공간을 쓰지 않는다. */
+    .hamb{display:block}
+    nav{display:none;flex-direction:column;gap:2px;padding:6px 0 8px}
+    body.nav-open nav{display:flex}
+    body.nav-open aside{box-shadow:0 12px 24px rgba(18,50,79,.13)}
+    nav a{width:100%;padding:11px 10px;border-radius:8px;font-size:14px;background:#fff;
+      border:0;border-bottom:1px solid #f1f4f8}
+    nav a:last-child{border-bottom:0}
+    nav a.on{background:#eaf1f9;color:var(--navy);font-weight:700}
+    .nav-t{display:block;font-size:11.5px;padding:10px 10px 4px}
     h1{font-size:18px}
     header.page{margin-bottom:12px;gap:10px}
     header.page .btn,header.page select{width:100%}
@@ -86,11 +92,29 @@
     .q .qt{font-size:13px}
     .opt{padding:9px 10px;font-size:12.8px}
   }
-  /* 표는 좁은 화면에서 카드 안에서 가로 스크롤. grid 자식의 min-width:auto가
-     표 min-width 때문에 카드를 밀어내므로 0으로 고정한다. */
+  /* grid 자식의 min-width:auto가 표 때문에 카드를 밀어내지 않게 고정 */
   .grid > *, .card, .kpi, .report, .q { min-width:0; }
-  .card, .report { overflow-x:auto; }
-  @media(max-width:900px){
+
+  /* 좁은 화면에서는 표를 라벨-값 카드로 세운다(가로 스크롤 없음) */
+  @media(max-width:700px){
+    .card, .report{overflow-x:visible}
+    table{display:block;min-width:0}
+    tbody{display:block}
+    tr.t-head{display:none}
+    tr{display:block;border:1px solid var(--line);border-radius:9px;
+      padding:6px 4px;margin-bottom:9px;background:#fff}
+    tr:last-child{margin-bottom:0}
+    td,th{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;
+      border:0;padding:6px 9px;font-size:13px;text-align:right}
+    td::before{content:attr(data-label);color:var(--muted);font-size:12px;
+      text-align:left;flex:0 0 auto;font-weight:600}
+    td[data-label=""]::before, th::before{display:none}
+    td.t-right{text-align:right}
+    th{background:none;color:inherit}
+    tr.t-sum{border-color:var(--navy);background:#f6f9fc}
+  }
+  /* 701~900px: 카드 안 가로 스크롤. 700 이하에서는 위의 라벨-값 카드로 전환되므로 min-width를 두지 않는다. */
+  @media(min-width:701px) and (max-width:900px){
     table{min-width:560px}
     table.wide{min-width:680px}
   }
@@ -183,7 +207,7 @@
 
 <div class="shell">
   <aside>
-    <div class="brand"><div class="logo">S</div><span>심플테크 영어학원</span></div>
+    <div class="brand"><div class="logo">S</div><span>심플테크 영어학원</span><button id="navBtn" class="hamb" aria-label="메뉴">☰</button></div>
     <nav id="nav"></nav>
   </aside>
   <main id="app"></main>
@@ -779,12 +803,31 @@ function go(id){
   }
   render();
 }
+// 좁은 화면에서 표를 라벨-값 카드로 세우기 위해 헤더 텍스트를 각 셀에 심는다
+function enhanceTables(){
+  document.querySelectorAll('#app table').forEach(t=>{
+    const rows = [...t.rows];
+    if(!rows.length) return;
+    const head = [...rows[0].cells];
+    if(!head.every(c=>c.tagName==='TH')) return;
+    rows[0].classList.add('t-head');
+    const labels = head.map(c=>c.innerText.trim());
+    rows.slice(1).forEach(r=>{
+      const cells = [...r.cells];
+      if(cells.every(c=>c.tagName==='TH')) { r.classList.add('t-sum'); return; }
+      cells.forEach((c,i)=>{ c.setAttribute('data-label', c.colSpan>1 ? '' : (labels[i]||'')); });
+    });
+  });
+}
 function render(){
   nav();
   const fn = RENDER[state.view] || vDashboard;
   $('#app').innerHTML = fn();
+  enhanceTables();
+  document.body.classList.remove('nav-open');
   window.scrollTo({top:0});
 }
+$('#navBtn').addEventListener('click', ()=>document.body.classList.toggle('nav-open'));
 
 $('#roleSel').addEventListener('change', e=>{
   state.role = e.target.value;

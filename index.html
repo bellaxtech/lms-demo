@@ -118,6 +118,25 @@
     table{min-width:560px}
     table.wide{min-width:680px}
   }
+  /* 하단 탭바: 모바일에서 주요 화면 5개를 한 손으로 */
+  .tabbar{display:none}
+  @media(max-width:900px){
+    .tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:#fff;
+      border-top:1px solid var(--line-2);padding:4px 4px calc(4px + env(safe-area-inset-bottom));
+      box-shadow:0 -6px 16px rgba(18,50,79,.06)}
+    .tabbar button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+      padding:7px 2px;border-radius:8px;color:#5b6876;font-size:11px;min-height:52px}
+    .tabbar button i{font-style:normal;font-size:17px;line-height:1}
+    .tabbar button.on{color:var(--navy);background:#eef4fa;font-weight:700}
+    main{padding-bottom:96px}
+    .btn{min-height:42px}
+    .btn.sm{min-height:38px}
+    .in,select.in{font-size:16px;min-height:44px}   /* iOS 포커스 확대 방지 */
+    nav a{min-height:44px;display:flex;align-items:center}
+  }
+  /* 시험 진행 표시 */
+  .prog{height:5px;border-radius:4px;background:#e6ebf2;overflow:hidden;margin:2px 0 12px}
+  .prog>i{display:block;height:100%;background:var(--navy);border-radius:4px;transition:width .18s}
   @media(max-width:560px){
     .g4{grid-template-columns:1fr 1fr}
     .kpi b{font-size:17px}
@@ -213,6 +232,7 @@
   <main id="app"></main>
 </div>
 <div class="toast" id="toast"></div>
+<div class="tabbar" id="tabbar"></div>
 
 <script>
 /* ───────────── 샘플 데이터 ───────────── */
@@ -295,6 +315,16 @@ const VIEWS = [
   {id:'landing', label:'상담·커리큘럼', icon:'☰', roles:['public','admin','desk'], group:'공개'},
   {id:'proposal', label:'제안 및 견적', icon:'₩', roles:['admin','desk','teacher','student','parent','public'], group:'제안'},
 ];
+
+/* 역할별 하단 탭: 한 손으로 닿는 주요 화면만 */
+const TABS = {
+  admin:   ['dashboard','applications','diagnosis','report-admin','attendance'],
+  desk:    ['dashboard','applications','diagnosis','report-admin'],
+  teacher: ['attendance','homework','dashboard'],
+  student: ['exam'],
+  parent:  ['report-view','landing'],
+  public:  ['landing','proposal'],
+};
 
 /* ───────────── 유틸 ───────────── */
 const $ = s => document.querySelector(s);
@@ -485,29 +515,51 @@ function vHomework(){
 function vExam(){
   const e = DB.exam;
   if(state.examDone) return vExamResult();
+  const i = state.qIndex || 0;
+  const it = e.items[i];
   const answered = Object.keys(state.answers).length;
+  const pct = Math.round(answered / e.total * 100);
+  const isLast = i === e.total - 1;
   return `
   <header class="page">
     <div><div class="crumbs">학습 · 학생</div><h1>레벨테스트 응시</h1>
-    <div class="sub">${e.test} · ${e.total}문항 · ${e.student}</div></div>
+    <div class="sub">${e.test} · ${e.student}</div></div>
     <div style="text-align:right"><div class="note">응답 저장됨</div><b>${answered} / ${e.total}</b></div>
   </header>
-  ${e.items.map((it,i)=>`
-    <div class="q">
-      <div class="qt">${i+1}. ${it.q}</div>
-      ${it.opts.map((o,j)=>`<div class="opt ${state.answers[i]===j?'sel':''}" onclick="pick(${i},${j})">
-        <span class="n">${'ABCD'[j]}</span><span>${o}</span></div>`).join('')}
-    </div>`).join('')}
-  <div style="display:flex;gap:8px;margin-top:6px">
-    <button class="btn" onclick="submitExam()">제출하기</button>
-    <button class="btn ghost" onclick="toast('중간 저장되었습니다 (데모)')">중간 저장</button>
+  <div class="prog"><i style="width:${pct}%"></i></div>
+  <p class="note" style="margin-bottom:10px">${i+1}번 문항 · ${it.area}</p>
+  <div class="q">
+    <div class="qt">${i+1}. ${it.q}</div>
+    ${it.opts.map((o,j)=>`<div class="opt ${state.answers[i]===j?'sel':''}" onclick="pick(${i},${j})">
+      <span class="n">${'ABCD'[j]}</span><span>${o}</span></div>`).join('')}
+  </div>
+  <div style="display:flex;gap:8px;margin-top:4px">
+    ${i>0 ? `<button class="btn ghost" onclick="state.qIndex=${i-1}; render()">이전</button>` : ''}
+    ${isLast
+      ? `<button class="btn" style="flex:1" onclick="submitExam()">제출하기</button>`
+      : `<button class="btn" style="flex:1" onclick="nextQ()">다음 문항</button>`}
   </div>
   <p class="note" style="margin-top:12px">제출 시 응답은 수정 불가 스냅샷으로 저장되고, 재응시는 새 응시 건으로 남습니다.</p>`;
 }
-function pick(i,j){ state.answers[i]=j; render(); }
+function nextQ(){
+  const last = DB.exam.total - 1;
+  const cur = state.qIndex || 0;
+  if(state.answers[cur] === undefined){ toast('답을 고르면 다음 문항으로 넘어갑니다'); return; }
+  if(cur < last) state.qIndex = cur + 1;
+  render();
+}
+function pick(i,j){
+  state.answers[i] = j;
+  const last = DB.exam.total - 1;
+  if(i < last){ state.qIndex = i + 1; }
+  render();
+}
 function submitExam(){
-  if(Object.keys(state.answers).length < DB.exam.total){ toast('모든 문항에 응답해주세요'); return; }
-  state.examDone = true; render();
+  if(Object.keys(state.answers).length < DB.exam.total){
+    const missing = DB.exam.items.findIndex((_,i)=>state.answers[i]===undefined);
+    toast('응답하지 않은 문항이 있습니다'); state.qIndex = missing < 0 ? 0 : missing; render(); return;
+  }
+  state.examDone = true; state.qIndex = 0; render();
 }
 function vExamResult(){
   let correct = 0, wrong=[];
@@ -821,6 +873,7 @@ function enhanceTables(){
 }
 function render(){
   nav();
+  drawTabs();
   const fn = RENDER[state.view] || vDashboard;
   $('#app').innerHTML = fn();
   enhanceTables();
@@ -828,6 +881,15 @@ function render(){
   window.scrollTo({top:0});
 }
 $('#navBtn').addEventListener('click', ()=>document.body.classList.toggle('nav-open'));
+function drawTabs(){
+  const ids = TABS[state.role] || [];
+  const el = $('#tabbar');
+  el.innerHTML = ids.map(id=>{
+    const v = VIEWS.find(x=>x.id===id);
+    return `<button class="${state.view===id?'on':''}" onclick="go('${id}')">
+      <i>${v.icon}</i><span>${v.label}</span></button>`;
+  }).join('');
+}
 
 $('#roleSel').addEventListener('change', e=>{
   state.role = e.target.value;
@@ -836,7 +898,7 @@ $('#roleSel').addEventListener('change', e=>{
     : state.role==='student' ? 'exam'
     : state.role==='parent' ? 'report-view'
     : state.role==='teacher' ? 'attendance' : 'dashboard';
-  state.examDone = false; state.answers = {};
+  state.examDone = false; state.answers = {}; state.qIndex = 0;
   render();
 });
 

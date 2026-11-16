@@ -52,7 +52,7 @@
   .g4{grid-template-columns:repeat(4,1fr)}
   /* ── 모바일 ── */
   @media(max-width:900px){
-    .shell{grid-template-columns:minmax(0,1fr)}
+    .shell{grid-template-columns:minmax(0,1fr);align-content:start}
     main{padding:16px 14px 40px;min-width:0}
     aside{min-width:0}
     .g2,.g3{grid-template-columns:1fr}
@@ -73,7 +73,7 @@
     .nav-t{display:block;font-size:11.5px;padding:10px 10px 4px}
     h1{font-size:18px}
     header.page{margin-bottom:12px;gap:10px}
-    header.page .btn,header.page select{width:100%}
+    header.page .btn{width:auto;padding:7px 12px;font-size:12.5px;min-height:36px}
     .card{padding:13px 12px;border-radius:9px}
     .kpi{padding:11px 12px}
     .kpi b{font-size:18px}
@@ -83,7 +83,22 @@
     .note{font-size:12.5px}
     .small{font-size:12px}
     .badge{font-size:11.5px}
-    .demo-bar{font-size:12px;padding:7px 12px;gap:8px;line-height:1.35}
+    /* 상단 영역 압축: 데모바 한 줄, 헤더 작게 */
+    .demo-bar{font-size:11.5px;padding:5px 12px;gap:8px;line-height:1.2;flex-wrap:nowrap;align-items:center}
+    .demo-bar .desc{display:none}
+    .demo-bar label{font-size:11px;opacity:.7}
+    .demo-bar select{padding:3px 6px;font-size:12px;min-height:26px;max-width:150px;flex:0 0 auto}
+    .brand{padding:2px 4px 4px}
+    .brand span{font-size:13px}
+    .logo{width:24px;height:24px;font-size:12px;border-radius:7px}
+    header.page{margin-bottom:10px;gap:6px;align-items:flex-start}
+    header.page > div:last-child{margin-left:auto;flex:0 0 auto}
+    .crumbs{font-size:10.5px;margin-bottom:1px}
+    h1{font-size:16.5px;letter-spacing:-.02em}
+    .sub{font-size:12px;margin-top:1px}
+    header.page .note{font-size:10.5px}
+    header.page > div:last-child b{font-size:14px}
+    .prog{margin:0 0 10px}
     .demo-bar .sp{display:none}
     .demo-bar select{flex:1}
     label.f{font-size:12px}
@@ -211,7 +226,7 @@
 <body>
 
 <div class="demo-bar">
-  <b>데모</b> <span>실제 서비스가 아니라 화면 흐름 검증용 프로토타입입니다 · 데이터는 샘플</span>
+  <b>데모</b> <span class="desc">실제 서비스가 아니라 화면 흐름 검증용 프로토타입입니다 · 데이터는 샘플</span>
   <span class="sp"></span>
   <label for="roleSel" style="opacity:.85">역할</label>
   <select id="roleSel">
